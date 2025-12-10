@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { processImagesToZip } from "../../../lib/imageProcessing";
 import { ProcessingSettings } from "../../../lib/types";
+import { processImagesToZip } from "@/lib/imageProcessing";
 
 
 export const runtime = "nodejs";

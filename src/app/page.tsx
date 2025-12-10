@@ -164,10 +164,10 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-slate-200 bg-blue-500">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <h1 className="text-sm font-semibold tracking-tight text-slate-900">
-            Bulk Product Image Converter
+            MTDEVBulk Product Image Converter
           </h1>
           <span className="text-[11px] text-slate-500">
             Resize, convert, compress, remove background

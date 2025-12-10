@@ -41,7 +41,10 @@ function getPresetDimensions(
   }
 }
 
-function getResizeOptions(resize: ResizeSettings) {
+function getResizeOptions(
+  resize: ResizeSettings,
+  background: BackgroundSettings
+) {
   if (!resize.usePreset && !resize.width && !resize.height) {
     return null;
   }
@@ -57,16 +60,25 @@ function getResizeOptions(resize: ResizeSettings) {
     }
   }
 
-  const fit =
-    resize.mode === "exact"
-      ? sharp.fit.cover
-      : sharp.fit.inside;
+  // For "fit", produce a fixed canvas with padding.
+  if (resize.mode === "fit") {
+    const bgColor =
+      background.mode === "solid" ? background.color : "#ffffff";
 
+    return {
+      width,
+      height,
+      fit: "contain" as const,
+      background: bgColor
+    };
+  }
+
+  // For "exact", crop to fill the box.
   return {
     width,
     height,
-    fit,
-    withoutEnlargement: true
+    fit: "cover" as const,
+    position: "centre"
   } as const;
 }
 
@@ -101,7 +113,7 @@ export async function processImagesToZip(
 
   for (const file of files) {
     try {
-      // 1. Background removal / replacement
+      // 1. Background removal / replacement (heuristic)
       const bgProcessedBuffer = await applyBackgroundRemoval(
         file.buffer,
         settings.background as BackgroundSettings
@@ -111,7 +123,10 @@ export async function processImagesToZip(
       let instance = sharp(bgProcessedBuffer).rotate();
 
       // 3. Resize
-      const resizeOptions = getResizeOptions(settings.resize as ResizeSettings);
+      const resizeOptions = getResizeOptions(
+        settings.resize as ResizeSettings,
+        settings.background as BackgroundSettings
+      );
       if (resizeOptions) {
         instance = instance.resize(resizeOptions);
       }
@@ -143,7 +158,6 @@ export async function processImagesToZip(
       zip.file(outputName, outputBuffer);
     } catch (err) {
       console.error("Error processing file", file.name, err);
-      // skip broken one and continue
       continue;
     }
   }

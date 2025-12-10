@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bulk Product Image Converter",
+  title: "Bulk Product Image Converter MTDEV",
   description: "Bulk image format conversion, resizing, compression and background removal for ecommerce."
 };
 
