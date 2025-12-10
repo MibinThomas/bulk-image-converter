@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { ProcessingSettings } from "../../../lib/types";
-import { processImagesToZip } from "@/lib/imageProcessing";
+import { processImages } from "@/lib/imageProcessing";
 
 
 export const runtime = "nodejs";
@@ -73,16 +73,41 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const zipBuffer = await processImagesToZip(files, settings);
+    // Process files and decide if we return a single image or a ZIP
+    const result = await processImages(files, settings);
 
+    // Normalise filename to ASCII safe characters. This avoids issues
+    // when a header contains Unicode or control characters (see Node header limitation).
+    function normalizeFilename(name: string): string {
+      return (
+        name
+          // Replace non-ASCII with underscores
+          .replace(/[^\x20-\x7E]/g, "_")
+          // Remove quotes and backslashes
+          .replace(/["\\]/g, "_") || "file"
+      );
+    }
+
+    if (result.type === "single") {
+      const headers = new Headers();
+      headers.set("Content-Type", "application/octet-stream");
+      const safeName = normalizeFilename(result.filename);
+      headers.set(
+        "Content-Disposition",
+        `attachment; filename="${safeName}"`
+      );
+      return new Response(result.buffer, { status: 200, headers });
+    }
+
+    // ZIP case when multiple files processed
     const headers = new Headers();
     headers.set("Content-Type", "application/zip");
+    const safeName = normalizeFilename(result.filename || "processed_images.zip");
     headers.set(
       "Content-Disposition",
-      'attachment; filename="processed-images.zip"'
+      `attachment; filename="${safeName}"`
     );
-
-    return new Response(zipBuffer, { status: 200, headers });
+    return new Response(result.buffer, { status: 200, headers });
   } catch (err) {
     console.error(err);
     return new Response("Failed to process images", { status: 500 });

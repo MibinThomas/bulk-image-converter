@@ -51,8 +51,13 @@ export default function HomePage() {
     replaceSpaces: true
   });
 
-  const { isProcessing, zipBlob, startProcessing, clearResult } =
-    useUploadQueue();
+  const {
+    isProcessing,
+    resultBlob,
+    resultName,
+    startProcessing,
+    clearResult
+  } = useUploadQueue();
 
   const totalBytes = useMemo(
     () => items.reduce((sum, f) => sum + f.size, 0),
@@ -147,12 +152,13 @@ export default function HomePage() {
     setSelectedId(null);
   }
 
-  function handleDownloadZip() {
-    if (!zipBlob) return;
-    const url = URL.createObjectURL(zipBlob);
+  function handleDownloadResult() {
+    if (!resultBlob) return;
+    const url = URL.createObjectURL(resultBlob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "processed-images.zip";
+    // Use the filename provided by the API if available; fall back to generic name
+    a.download = resultName || "download";
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -217,14 +223,20 @@ export default function HomePage() {
           >
             Clear All
           </button>
-          <button
-            type="button"
-            className="flex-1 rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
-            disabled={!hasFiles || isProcessing}
-            onClick={zipBlob ? handleDownloadZip : handleStartProcessing}
-          >
-            {zipBlob ? "Download ZIP" : isProcessing ? "Processing..." : "Start Processing"}
-          </button>
+              <button
+                type="button"
+                className="flex-1 rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                disabled={!hasFiles || isProcessing}
+                onClick={resultBlob ? handleDownloadResult : handleStartProcessing}
+              >
+                {resultBlob
+                  ? resultName && resultName.toLowerCase().endsWith(".zip")
+                    ? "Download ZIP"
+                    : "Download Image"
+                  : isProcessing
+                  ? "Processing..."
+                  : "Start Processing"}
+              </button>
         </div>
       </div>
 
@@ -245,14 +257,20 @@ export default function HomePage() {
                 ? `${items.length} files, ${(totalBytes / (1024 * 1024)).toFixed(1)} MB`
                 : "No files selected"}
             </p>
-            <button
-              type="button"
-              className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
-              disabled={!hasFiles || isProcessing}
-              onClick={zipBlob ? handleDownloadZip : handleStartProcessing}
-            >
-              {zipBlob ? "Download ZIP" : isProcessing ? "Processing..." : "Start Processing"}
-            </button>
+              <button
+                type="button"
+                className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                disabled={!hasFiles || isProcessing}
+                onClick={resultBlob ? handleDownloadResult : handleStartProcessing}
+              >
+                {resultBlob
+                  ? resultName && resultName.toLowerCase().endsWith(".zip")
+                    ? "Download ZIP"
+                    : "Download Image"
+                  : isProcessing
+                  ? "Processing..."
+                  : "Start Processing"}
+              </button>
           </div>
         </div>
       </div>
